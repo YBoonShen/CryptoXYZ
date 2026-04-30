@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoXYZ | Price Monitoring and Portfolio Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js" defer></script>
+</head>
+<body>
+    <div class="app-layout">
+        <nav class="sidebar">
+            <div class="brand">
+                <div class="logo-box">C</div>
+                <span>CryptoXYZ</span>
+            </div>
+
+            <div class="nav-section">
+                <p class="section-title">Analysis Settings</p>
+                <div class="control-card">
+                    <label class="custom-toggle">
+                        <input type="checkbox" id="toggleMA" checked>
+                        <span class="check-box"></span> 📈 20-Day MA
+                    </label>
+                    <label class="custom-toggle">
+                        <input type="checkbox" id="toggleRSI">
+                        <span class="check-box"></span> 💗 RSI Indicator
+                    </label>
+                    <label class="custom-toggle">
+                        <input type="checkbox" id="toggleMACD">
+                        <span class="check-box"></span> 📉 MACD Indicator
+                    </label>
+                    <label class="custom-toggle">
+                        <input type="checkbox" id="toggleVolume" checked>
+                        <span class="check-box"></span> 📊 Volume Bars
+                    </label>
+                    <label class="custom-toggle">
+                        <input type="checkbox" id="togglePrediction">
+                        <span class="check-box"></span> 🔮 Trend Forecast
+                    </label>
+                    <p class="helper-copy">7-day forecast using linear regression based on the latest 30 days.</p>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <p class="section-title">Tools & Markers</p>
+                <div class="tool-buttons">
+                    <button class="tool-btn" id="lineToolBtn">📏 Trend Line</button>
+                    <button class="tool-btn marker-btn" data-type="buy">🟢 Buy Signal</button>
+                    <button class="tool-btn marker-btn" data-type="sell">🔴 Sell Signal</button>
+                    <button class="tool-btn marker-btn" data-type="note">📝 Add Note</button>
+                    <button class="tool-btn" id="clearToolsBtn">🧹 Clear All</button>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <p class="section-title">Quick Watchlist</p>
+                <div class="watchlist">
+                    <button class="watch-btn" data-coin-id="bitcoin">BTC</button>
+                    <button class="watch-btn" data-coin-id="ethereum">ETH</button>
+                    <button class="watch-btn" data-coin-id="solana">SOL</button>
+                    <button class="watch-btn" data-coin-id="binancecoin">BNB</button>
+                    <button class="watch-btn" data-coin-id="ripple">XRP</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-body">
+            <header class="top-header">
+                <div class="search-wrapper">
+                    <div class="search-input-group">
+                        <input type="text" id="coinInput" placeholder="Enter coin name or symbol (e.g. Bitcoin, BTC)" autocomplete="off">
+                        <button id="searchBtn">Analyze</button>
+                    </div>
+                    <div id="searchSuggestions" class="suggestions-box hidden"></div>
+                </div>
+                <div class="header-right">
+                    <div class="status-badge">CoinGecko API Mode</div>
+                </div>
+            </header>
+
+            <section class="ticker-bar">
+                <div class="ticker-item">
+                    <span class="ticker-label">Coin</span>
+                    <span id="displayCoin" class="ticker-val">---</span>
+                </div>
+                <div class="ticker-item">
+                    <span class="ticker-label">Price</span>
+                    <span id="displayPrice" class="ticker-val">---</span>
+                </div>
+                <div class="ticker-item">
+                    <span class="ticker-label">24h Change</span>
+                    <span id="displayChange" class="ticker-val">---</span>
+                </div>
+                <div class="ticker-item">
+                    <span class="ticker-label">Market Cap</span>
+                    <span id="displayMarketCap" class="ticker-val">---</span>
+                </div>
+            </section>
+
+            <div class="content-grid">
+                <section class="chart-panel">
+                    <div id="welcomeOverlay" class="welcome-screen">
+                        <div class="welcome-content">
+                            <div class="welcome-icon">🚀 Crypto</div>
+                            <h2>Ready to Monitor Crypto Prices?</h2>
+                            <p>Search for Bitcoin, Ethereum, or another cryptocurrency to load market data.</p>
+                        </div>
+                    </div>
+                    <div id="mainChart" class="chart-canvas"></div>
+                </section>
+
+                <aside class="portfolio-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="section-title">Portfolio Manager</p>
+                            <h2>Holdings</h2>
+                        </div>
+                        <button id="refreshPortfolioBtn" class="icon-btn" title="Refresh prices">Refresh</button>
+                    </div>
+
+                    <form id="portfolioForm" class="portfolio-form">
+                        <label>
+                            Selected Coin
+                            <input type="text" id="portfolioCoin" value="Load a coin first" readonly>
+                        </label>
+                        <div class="form-row">
+                            <label>
+                                Quantity
+                                <input type="number" id="portfolioQuantity" min="0" step="0.00000001" placeholder="0.05">
+                            </label>
+                            <label>
+                                Buy Price (USD)
+                                <input type="number" id="portfolioBuyPrice" min="0" step="0.01" placeholder="60000">
+                            </label>
+                        </div>
+                        <button type="submit" id="addHoldingBtn">Add Holding</button>
+                    </form>
+
+                    <div class="portfolio-summary">
+                        <div>
+                            <span>Total Cost</span>
+                            <strong id="totalCost">$0.00</strong>
+                        </div>
+                        <div>
+                            <span>Current Value</span>
+                            <strong id="currentValue">$0.00</strong>
+                        </div>
+                        <div>
+                            <span>Total P/L</span>
+                            <strong id="totalProfitLoss">$0.00</strong>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Coin</th>
+                                    <th>Qty</th>
+                                    <th>Buy</th>
+                                    <th>P/L</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolioTable">
+                                <tr>
+                                    <td colspan="5" class="empty-cell">No holdings added yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <div id="errorToast" class="toast hidden"></div>
+    <script src="script.js"></script>
+</body>
+</html>
